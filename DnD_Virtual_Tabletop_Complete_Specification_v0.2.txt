@@ -1,0 +1,1632 @@
+D&D VIRTUAL TABLETOP COMPLETE GAME DESIGN AND PRODUCT SPECIFICATION
+Version: 0.2 Status: Initial comprehensive specification Rules baseline:
+Dungeons & Dragons 5th Edition (2014) Platform: Browser-based web
+application Map system: Square grid, 5 feet per square
+
+======================================================================
+0. DOCUMENT PURPOSE AND AUTHORITY
+======================================================================
+
+This document defines the intended product, gameplay, rules behavior,
+user experience, data requirements, multiplayer behavior, and acceptance
+criteria for the D&D Virtual Tabletop (“the Application”).
+
+It is intended to be a durable source of truth for designing, building,
+testing, and expanding the Application. It describes WHAT the product
+must do and HOW it must behave. It is not a coding tutorial and does not
+require any particular implementation framework.
+
+Where a feature is explicitly marked MVP, it is required for the first
+playable release. Later features are still part of the intended product
+but may be implemented after the MVP.
+
+Where a rule or product decision has not yet been finalized, this
+document states a recommended default and labels it as a configurable or
+future decision rather than silently treating it as settled.
+
+The Application is a virtual tabletop and rules automation tool. It is
+not intended to replace the Dungeon Master or turn the adventure into a
+fully automated computer RPG.
+
+====================================================================== 1.
+PRODUCT VISION
+======================================================================
+
+1.1 Core concept
+
+Create a browser-based multiplayer tabletop role-playing application
+based on D&D 5th Edition (2014).
+
+Players create persistent characters, join campaigns hosted by a Dungeon
+Master (DM), view and interact with shared tactical maps, and
+participate in adventures.
+
+The DM creates campaigns, builds maps from tiles, places NPCs and
+monsters, manages encounters, awards rewards, and controls the
+adventure.
+
+The Application automates repetitive and rules-heavy gameplay tasks:
+dice calculations, initiative, movement validation, attack resolution,
+damage, conditions, range, line of sight, turn order, and other
+supported mechanics.
+
+The DM retains final authority over the campaign. The DM can override or
+directly edit the game state at any time, including during combat.
+
+1.2 Design philosophy
+
+The guiding principle is:
+
+“Let the DM control the adventure. Let the players control their
+characters. Let the software handle the rules and calculations.”
+
+The Application should: - Make common player actions quick and
+understandable. - Automate calculations without hiding how results were
+obtained. - Enforce agreed rules consistently. - Give the DM
+unrestricted practical control over the campaign. - Keep the interface
+approachable for people unfamiliar with complex virtual tabletop
+software. - Separate the visual presentation from the underlying rules
+and data. - Support both structured combat and freeform role-playing. -
+Preserve campaign and character information between sessions.
+
+1.3 Product boundaries
+
+The Application is primarily a 2D virtual tabletop, not a 3D game. It
+does not require real-time action combat, physics simulation, voice
+chat, video chat, or a built-in AI storyteller for its initial release.
+
+The DM remains responsible for narrative decisions, role-playing,
+adjudicating unusual situations, and deciding when the rules should be
+overridden.
+
+1.4 Target users
+
+PLAYER: A person who wants to create and manage one or more D&D
+characters, join a DM’s campaign, see the shared map, make character
+actions, roll requested dice, and participate in combat.
+
+DUNGEON MASTER: A person who wants to host campaigns, prepare maps and
+encounters, manage monsters and NPCs, control combat, and retain the
+ability to change any relevant game state.
+
+======================================================================
+2. PLATFORM AND HIGH-LEVEL PRODUCT STRUCTURE
+======================================================================
+
+2.1 Platform
+
+The product is a web application accessed through a modern browser.
+Players and DMs use separate accounts and can join the same campaign
+over the internet.
+
+The interface must adapt to common desktop and laptop screen sizes. The
+primary tactical-map experience is desktop-first. Smaller screens may be
+supported with a simplified interface, but the initial product must not
+sacrifice the usability of the map and combat tools.
+
+2.2 Main application areas
+
+A. Authentication and account management B. Player home and character
+library C. Character creation and character sheet D. Campaign lobby and
+session access E. DM campaign management F. Map editor G. Live tabletop
+/ game session H. Combat interface I. Creature, NPC, item, and spell
+libraries J. DM administration and override tools K. History, logs, and
+campaign records L. Application settings
+
+2.3 User roles and permissions
+
+ACCOUNT OWNER: The person who owns a user account. An account can
+participate in campaigns as a player and may also host campaigns as a
+DM.
+
+CAMPAIGN OWNER / DM: The account that created or currently owns a
+campaign. The DM has full authority over that campaign’s state and
+content.
+
+PLAYER: A campaign member who controls their assigned character(s) and
+can perform permitted actions.
+
+SPECTATOR: A possible future role. A spectator may view the session but
+cannot control a character or alter the game.
+
+A user may be a DM in one campaign and a player in another.
+
+2.4 Campaign authority
+
+The DM is the final authority for a campaign. The system enforces normal
+rules for players, but the DM can override them. A DM override must not
+be blocked merely because it conflicts with normal rules.
+
+The system should distinguish: - Normal player action. - Normal
+automated system resolution. - DM-authorized override. -
+Administrative/system correction.
+
+These distinctions should be recorded in the event history.
+
+======================================================================
+3. PLAYER ACCOUNT AND CHARACTER SYSTEM
+======================================================================
+
+3.1 Player account
+
+An account should include: - Unique account identifier. - Display
+name. - Login credentials or supported authentication identity. -
+Profile image, if desired. - Account preferences. - Created and
+last-active timestamps. - Account status.
+
+A player must be able to access their character library from their
+account and join campaigns using an invitation or other DM-approved
+method.
+
+3.2 Character ownership
+
+Characters belong to the player’s account, not directly to a campaign. A
+player can maintain multiple saved characters.
+
+A campaign uses a campaign-specific character instance or campaign
+record derived from the player’s saved character. This is necessary to
+prevent unrelated campaigns from unintentionally sharing HP, inventory,
+conditions, XP, or other campaign-specific state.
+
+The DM may configure whether a character can be used in more than one
+campaign. Cross-campaign reuse must not automatically synchronize
+campaign-specific state.
+
+3.3 Character creation
+
+Character creation must be a guided process. It should explain choices
+and show derived values where practical.
+
+Required character identity fields: - Character name. - Portrait. - Race
+(the 2014 rules term; the interface may use a neutral label where
+appropriate). - Class. - Level. - Background. - Alignment (optional
+descriptive field). - Personality traits (optional). - Ideals
+(optional). - Bonds (optional). - Flaws (optional). - Character
+description (optional).
+
+Ability scores: - Strength. - Dexterity. - Constitution. -
+Intelligence. - Wisdom. - Charisma.
+
+Initial ability-score generation methods: - Standard Array. - Point
+Buy. - Manual Assignment.
+
+Rolling for ability scores may be added later. If enabled in a campaign,
+the DM must be able to choose the allowed generation method.
+
+Character creation must validate prerequisites and class/race/background
+choices according to the selected 2014 rules content. Where the DM
+allows custom or house-rule content, validation may be relaxed.
+
+3.4 Race and class content
+
+The initial rules baseline is D&D 5e 2014 and the initial legal content
+baseline should be the applicable SRD 5.1 material or other content that
+the project has permission to use.
+
+The Application must not assume that every published D&D book or non-SRD
+option can be reproduced freely. Content availability must be controlled
+by the project’s content licensing and permissions.
+
+The system should support data-driven definitions for: - Races and
+racial traits. - Classes and class features. - Subclasses. -
+Backgrounds. - Feats. - Proficiencies. - Languages. - Spells. -
+Equipment. - Conditions.
+
+Content should be extendable without rewriting the core character
+calculation logic.
+
+3.5 Character portrait
+
+Players may: - Upload a portrait image they own or have permission to
+use. - Choose from portraits supplied with the Application. - Replace
+their portrait later.
+
+The system should validate supported image formats and reasonable file
+sizes, create suitable display versions, and preserve the original where
+appropriate.
+
+The portrait is used in character lists, campaign rosters, initiative
+trackers, character sheets, and other relevant interfaces.
+
+A portrait is visual identity only; it does not affect gameplay.
+
+3.6 Character sheet
+
+The character sheet must show, at minimum:
+
+IDENTITY: - Name. - Portrait. - Race. - Class and subclass. - Level. -
+Background. - Experience points. - Inspiration status.
+
+ABILITY SCORES: - STR, DEX, CON, INT, WIS, CHA. - Ability modifiers.
+
+PROFICIENCIES: - Proficiency bonus. - Saving throw proficiencies. -
+Skill proficiencies. - Tool proficiencies. - Weapon and armor
+proficiencies. - Languages.
+
+COMBAT: - Current HP. - Maximum HP. - Temporary HP. - Armor Class. -
+Initiative modifier. - Speed. - Hit Dice. - Death saving throw state. -
+Conditions and effects.
+
+ATTACKS: - Weapon or attack name. - Attack bonus. - Reach or range. -
+Damage dice. - Damage type. - Properties. - Ammunition or usage
+requirements, where relevant.
+
+EQUIPMENT: - Equipped armor. - Equipped weapons. - Shield. - Other
+equipped items. - Attunement, if supported. - Equipment effects.
+
+INVENTORY: - Items and quantities. - Currency. - Weight and carrying
+capacity, if the campaign uses those rules. - Consumables. - Loot and
+quest items.
+
+CLASS FEATURES: - Features and uses. - Resource counters. - Recharge
+conditions. - Subclass features.
+
+SPELLCASTING: - Spellcasting ability. - Spell save DC. - Spell attack
+bonus. - Known or prepared spells. - Spell slots. - Cantrips. -
+Concentration state. - Other class-specific spell resources.
+
+OTHER: - Character notes. - Backstory. - Appearance. - Personality. - DM
+notes, with visibility controls.
+
+3.7 Automatic calculations
+
+Derived values should be calculated from source data wherever possible.
+Examples include: - Ability modifiers from ability scores. - Proficiency
+bonus from character level. - Skill modifiers. - Saving throw
+modifiers. - Initiative modifier. - Spell save DC. - Spell attack
+modifier. - Weapon attack modifiers. - Carrying capacity when the rule
+is enabled. - Armor Class from applicable equipment and features.
+
+The DM must be able to override a derived value where a house rule or
+special circumstance requires it. The system should retain enough
+information to identify the override and its source.
+
+3.8 Character progression
+
+The Application should support: - XP tracking. - Level advancement. -
+Class feature unlocks. - Hit point increases. - Proficiency bonus
+changes. - Spell and resource progression. - Ability score improvements
+and feats, as applicable.
+
+The DM may award XP manually, use encounter XP, award milestone
+progression, or directly set a character’s level.
+
+Campaign settings should determine whether XP or milestone advancement
+is used. The DM can override progression at any time.
+
+3.9 Character deletion and archiving
+
+Players should be able to archive characters they no longer use.
+Permanent deletion should require confirmation and must not silently
+destroy campaign records that the DM needs for historical purposes.
+
+======================================================================
+4. CAMPAIGN SYSTEM
+======================================================================
+
+4.1 Campaign creation
+
+A DM can create multiple campaigns.
+
+Each campaign should have: - Campaign name. - Description. - Campaign
+image or icon (optional). - Owner/DM. - Creation date. - Membership
+list. - Campaign status. - Campaign settings. - Maps. - Encounters. -
+NPC and monster records. - Session history. - Campaign notes.
+
+4.2 Campaign invitation and membership
+
+The DM can invite players using a private invitation link or code. The
+DM can accept or remove campaign members.
+
+A player can leave a campaign. Leaving must not automatically delete
+their account or saved character.
+
+The DM can assign a character to a player and control which character
+that player uses in the campaign.
+
+4.3 Campaign settings
+
+Campaign settings should include: - Rules baseline: D&D 5e 2014. -
+Allowed content sources. - Character creation method. - XP or milestone
+advancement. - Grid scale. - Optional encumbrance. - Optional flanking
+rule. - Optional diagonal movement convention. - Optional critical hit
+handling if house-ruled. - Optional death and resurrection house
+rules. - Whether players can edit their own inventory. - Whether players
+can see monster statistics. - Whether players can see DCs. - Whether
+players can see hidden creatures. - Whether players can see the full map
+or only revealed areas. - Whether DM approval is required for certain
+actions.
+
+Default campaign settings should follow the 2014 rules where applicable.
+House rules must be clearly identified and configurable.
+
+4.4 Campaign persistence
+
+Campaign state must persist between sessions: - Character state. -
+Inventory. - Current HP. - Conditions. - Maps. - Token positions. -
+Encounter state where appropriate. - DM notes. - Campaign events and
+rewards.
+
+A player disconnecting must not delete their character or campaign data.
+
+4.5 Session lifecycle
+
+A DM can: - Open a session. - Pause a session. - Resume a session. - End
+a session. - Reopen a campaign later.
+
+The campaign should distinguish an active live session from the
+persistent campaign itself.
+
+======================================================================
+5. MAP EDITOR AND TILE SYSTEM
+======================================================================
+
+5.1 Map model
+
+Maps use a square grid. Each square represents 5 feet by default.
+
+A map has: - Name. - Width and height in tiles. - Tile data. - Visual
+layers. - Gameplay layers. - Object and door placements. - Starting
+positions. - Token placements. - Optional lighting and visibility
+data. - Map notes.
+
+The map may be indoor, outdoor, underground, urban, wilderness, or any
+other setting. The system should not limit map themes.
+
+5.2 Tile definition
+
+Every tile must have a visual representation and independent gameplay
+properties.
+
+Minimum tile properties: - Unique tile identifier. - Display name. -
+Texture or image reference. - Walkable or non-walkable. - Blocks
+vision. - Blocks attacks, where applicable. - Movement cost. - Terrain
+category. - Cover property, where appropriate. - Interaction behavior,
+if any. - Destructible status, if supported.
+
+Visual appearance and collision/rules properties must be independent. A
+DM may use a custom image for a tile without changing how it behaves.
+
+5.3 Initial terrain types
+
+The initial tile library should include examples of: - Ordinary floor. -
+Stone floor. - Dirt. - Grass. - Sand. - Shallow water. - Deep water. -
+Difficult terrain. - Wall. - Rock or cliff. - Door. - Window. - Pit or
+hole. - Stairs. - Bridge. - Difficult or hazardous ground.
+
+These are starter categories, not an exhaustive fixed list.
+
+5.4 Walkability and collision
+
+A tile marked non-walkable cannot normally be entered by a player or
+monster.
+
+Movement must also consider: - Occupied spaces. - Creature size. -
+Terrain costs. - Movement remaining. - Special movement modes. -
+Conditions and effects. - Doors and other dynamic objects.
+
+The DM can override collision and move any token as needed.
+
+5.5 Line of sight and attack obstruction
+
+Movement collision and line of sight are separate properties.
+
+Examples: - A wall blocks movement and vision. - A window may block
+movement but permit vision. - A low obstacle may provide cover without
+completely blocking vision. - A closed opaque door may block movement,
+vision, and attacks. - A transparent barrier may permit vision but block
+attacks.
+
+The system must use map geometry and tile/object properties to determine
+whether a creature has line of sight to another creature or target.
+
+The DM can override visibility or targeting restrictions.
+
+5.6 Movement cost and difficult terrain
+
+Ordinary movement uses the campaign’s grid convention and D&D movement
+rules. Difficult terrain costs additional movement according to the
+rules. The system should not assume every tile costs exactly one square
+of movement.
+
+Movement calculation must account for the campaign’s selected diagonal
+movement convention. The selected convention must be consistent and
+visible to the DM.
+
+5.7 Map editor tools
+
+The DM map editor should provide: - Tile palette. - Brush tool. -
+Eraser. - Fill tool. - Rectangle/area painting. - Selection tool. - Map
+resize. - Undo and redo. - Object placement. - Door placement and state
+editing. - Token placement. - Starting-position editing. - Layer
+visibility. - Save and duplicate map. - Import/export where supported.
+
+The DM should be able to create and edit maps without programming.
+
+5.8 Map layers
+
+Recommended logical layers: - Ground/terrain. - Walls and structures. -
+Objects and interactive features. - Decorations. - Tokens. - Lighting
+and visibility. - DM-only notes or hidden content.
+
+The DM may show or hide layers while editing. Players should only see
+layers permitted by campaign visibility settings.
+
+5.9 Live map editing
+
+The DM can edit the map during an active session.
+
+Examples: - Open or close a door. - Destroy or create a wall. - Add
+difficult terrain. - Reveal a hidden passage. - Spawn an object. -
+Remove an obstacle. - Change a tile’s gameplay properties.
+
+Changes should synchronize to all connected participants. The DM should
+receive a warning if an edit affects a token’s current position or an
+active movement path.
+
+======================================================================
+6. TOKENS, NPCS, AND CREATURES
+======================================================================
+
+6.1 Tokens
+
+A token represents a character, monster, NPC, or other map entity.
+
+Token properties include: - Unique token ID. - Associated character or
+creature record. - Name. - Portrait or token image. - Grid position. -
+Size. - Facing direction, if used. - Visibility. - Ownership/control. -
+Current HP display settings. - Conditions and status markers. - Movement
+and combat state.
+
+The visual token must be separate from the underlying character or
+creature record.
+
+6.2 Creature categories
+
+The system should support: - Player characters. - Monsters. - Friendly
+NPCs. - Neutral NPCs. - Hostile NPCs. - Summoned creatures. - Temporary
+or generic tokens.
+
+6.3 Creature templates
+
+The DM should have a library of reusable creature templates.
+
+A creature template may contain: - Name. - Description. - Creature
+type. - Size. - Alignment, if relevant. - Armor Class. - Hit points and
+hit dice. - Ability scores. - Speed and movement modes. - Saving
+throws. - Skills. - Senses. - Languages. - Challenge Rating. -
+Proficiency bonus or derived statistics. - Damage vulnerabilities. -
+Damage resistances. - Damage immunities. - Condition immunities. -
+Traits. - Actions. - Bonus actions. - Reactions. - Legendary actions,
+where applicable. - Spellcasting. - XP value. - Loot table. - Token
+image.
+
+6.4 Monster generation
+
+The DM should be able to select a creature template and create an
+encounter instance.
+
+The DM can choose: - Creature template. - Quantity. - Individual or
+group placement. - Optional scaling preset. - Encounter-specific HP or
+stat adjustments. - Loot and XP behavior.
+
+The system should use the selected template’s rules data. It must not
+invent a monster’s statistics merely because the DM selects an arbitrary
+level or difficulty.
+
+Challenge Rating is the baseline encounter difficulty reference.
+Optional scaling presets may be provided, but they must be clearly
+identified as custom scaling rather than official 2014 rules.
+
+6.5 Creature editing
+
+The DM can edit any creature instance, including: - HP and maximum HP. -
+AC. - Ability scores. - Movement. - Attack bonuses. - Damage. -
+Resistances. - Immunities. - Actions and abilities. - Conditions. - XP
+reward. - Loot. - Position. - Size. - Visibility. - AI behavior.
+
+Instance changes should not alter the original reusable template unless
+the DM explicitly chooses to save those changes to the template.
+
+6.6 NPC management
+
+NPCs may use full creature stat blocks or a simplified NPC profile.
+
+NPC records may include: - Name and portrait. - Description. -
+Disposition. - Faction. - Notes. - Dialogue notes. - Location. -
+Inventory. - Quest relationship. - Optional combat statistics.
+
+NPCs may be friendly, neutral, or hostile. The DM controls their
+behavior and can take manual control during encounters.
+
+======================================================================
+7. ITEMS, EQUIPMENT, LOOT, AND INVENTORY
+======================================================================
+
+7.1 Item categories
+
+The item system should support: - Weapons. - Armor. - Shields. -
+Adventuring gear. - Tools. - Consumables. - Potions. - Scrolls. -
+Ammunition. - Treasure. - Currency. - Quest items. - Custom items.
+
+7.2 Item properties
+
+An item may have: - Name. - Description. - Icon or image. - Category. -
+Weight. - Value. - Rarity. - Stack limit. - Equipment slot. - Weapon or
+armor properties. - Damage and damage type. - Range or reach. -
+Proficiency requirements. - Charges or uses. - Magical properties. -
+Attunement requirement. - Effects. - Source/content reference.
+
+7.3 Equipment
+
+Equipping an item should update relevant derived character values.
+
+The system must account for: - Armor proficiency. - Armor class
+formulas. - Shield bonuses. - Weapon proficiency. - Weapon properties. -
+Two-handed and versatile use. - Ammunition. - Loading. - Finesse. -
+Heavy and light properties. - Magical bonuses. - Class and feature
+restrictions where applicable.
+
+The DM can override equipment restrictions and character inventory.
+
+7.4 Inventory operations
+
+Players may be allowed to: - Add or remove permitted items. - Equip and
+unequip items. - Split or combine stacks. - Consume items. - Transfer
+items to another character. - Manage currency.
+
+Campaign settings and DM permissions determine which actions players may
+perform without approval.
+
+7.5 Loot tables
+
+A creature or encounter can have a loot table.
+
+Loot entries may specify: - Item. - Quantity or quantity range. - Chance
+of appearing. - Conditions. - Individual or shared distribution.
+
+The DM can edit generated loot before or after it is awarded.
+
+7.6 Rewards
+
+The system should support: - XP rewards. - Milestone progression. -
+Currency. - Items. - Custom rewards. - Quest rewards.
+
+The DM can distribute rewards manually or use configured encounter
+rewards.
+
+======================================================================
+8. DICE AND CHECK SYSTEM
+======================================================================
+
+8.1 General behavior
+
+The Application automates dice rolls when the rules or DM request
+requires a roll. Players should generally press a single “Roll Dice!”
+button rather than calculate modifiers themselves.
+
+The system must display: - Roll type. - Die or dice rolled. - Individual
+die results where appropriate. - Ability modifier. - Proficiency bonus,
+if applicable. - Other modifiers. - Total result. -
+Advantage/disadvantage state. - Success/failure if a DC or target number
+is known.
+
+8.2 Roll requests outside combat
+
+Out-of-combat dice rolls are initiated or adjudicated by the DM.
+
+The DM may request: - One player’s roll. - Multiple players’ rolls. - A
+specific ability check. - A skill check. - A saving throw. - Another
+supported roll.
+
+A player receives a prompt containing: - Requested roll type. - Relevant
+ability or skill. - Character-derived modifiers. - Optional DC
+visibility. - Roll Dice! button.
+
+The system calculates the result using the character’s applicable
+statistics and sends the result to the DM and appropriate participants.
+
+The DM may: - Set a DC. - Hide or reveal the DC. - Request public or
+private results. - Accept the result. - Override the result. - Decide
+the outcome without a roll.
+
+The DM is not required to use automated rolls outside combat.
+
+8.3 Combat rolls
+
+Combat rolls are initiated by the game system when an action requires
+them. The system should not ask players to manually add modifiers.
+
+Examples: - Initiative. - Attack rolls. - Damage rolls. - Saving
+throws. - Death saving throws. - Contested checks where supported. -
+Other action-specific rolls.
+
+8.4 Advantage and disadvantage
+
+The dice engine must support advantage and disadvantage according to the
+2014 rules. When both apply, the normal cancellation rules should be
+followed.
+
+The interface should clearly show whether a roll was normal, with
+advantage, or with disadvantage.
+
+8.5 Critical hits and natural rolls
+
+The attack resolution system must support critical hits according to the
+2014 rules and applicable features.
+
+Natural 1 and natural 20 behavior must be handled according to the type
+of roll. A natural 20 is not automatically a success for every ability
+check or saving throw under the baseline rules.
+
+House rules may modify behavior if the DM enables them.
+
+8.6 Dice integrity
+
+Players must not be able to choose or alter a server-authoritative
+random result through client-side manipulation.
+
+Roll records should include: - Roller. - Campaign. - Character or
+creature. - Roll purpose. - Dice expression. - Raw die result(s). -
+Modifiers. - Total. - Timestamp. - Visibility. - Whether a DM override
+occurred.
+
+The DM may override a roll, but the original result and override should
+remain distinguishable in the history.
+
+======================================================================
+9. COMBAT SYSTEM
+======================================================================
+
+9.1 Combat goals
+
+Combat should follow D&D 5e 2014 mechanics as closely as practical,
+while keeping the interface simple.
+
+The system should automatically handle calculations and legal-action
+validation. It should explain why an action is unavailable when
+possible.
+
+9.2 Starting combat
+
+The DM can start combat manually or trigger it through an encounter.
+
+When combat starts: - Participants are identified. - Initiative is
+rolled. - Initiative modifiers are applied. - The turn order is
+created. - The combat tracker becomes visible. - Players are notified
+when their turns begin.
+
+The DM can add or remove participants during combat and adjust the
+initiative order.
+
+9.3 Initiative
+
+Player characters roll initiative using the appropriate modifier.
+Monsters and NPCs roll automatically by default.
+
+The DM may: - Roll initiative manually. - Set initiative values. -
+Reorder participants. - Break or resolve ties. - Add a creature after
+combat begins. - Override the result.
+
+The initiative tracker should show the current participant, upcoming
+participants, and relevant status information.
+
+9.4 Turn structure
+
+The system should track: - Movement. - Action. - Bonus action. -
+Reaction. - Object interaction where relevant. - Other limited-use
+resources.
+
+The system must not assume every character has a bonus action or
+reaction available for every turn.
+
+The DM can end, skip, pause, or manually advance turns.
+
+9.5 Player action interface
+
+During a player’s turn, the interface should present available actions
+based on the character’s current capabilities and situation.
+
+Common action categories: - Attack. - Cast a spell. - Dash. -
+Disengage. - Dodge. - Help. - Hide. - Ready. - Search. - Use an
+object. - Use a class feature. - Other supported actions.
+
+Bonus actions and reactions should be shown separately when available.
+
+The interface should not display an action as usable if its basic
+requirements are not met, unless the DM is allowing an override.
+
+9.6 Movement
+
+Each character or creature has a movement allowance based on its current
+speed and applicable effects.
+
+The player selects a destination tile or movement path. The system
+validates: - Remaining movement. - Terrain movement cost. - Occupied
+spaces. - Walls and obstacles. - Creature size. - Special movement
+modes. - Difficult terrain. - Conditions and effects. - Campaign
+diagonal movement convention.
+
+The system calculates distance from grid positions and prevents a player
+from moving farther than permitted.
+
+The DM may move any token regardless of normal movement restrictions.
+
+Movement should support a preview before confirmation. Invalid
+destinations should be visually distinguishable and explain the reason
+when possible.
+
+9.7 Grid distance
+
+The default grid scale is 5 feet per square.
+
+Distance calculations must use the campaign’s selected grid convention.
+The system should support the chosen 2014-compatible diagonal movement
+rule and must not mix different distance methods within one campaign.
+
+Large and larger creatures occupy multiple squares. Their occupied space
+must be used for movement, reach, and targeting calculations.
+
+9.8 Attacks
+
+When a player selects an attack: - The system checks whether the attack
+is available. - The player selects a legal target. - The system checks
+range and line of sight as applicable. - The system calculates the
+attack modifier. - The system rolls the attack. - The system compares
+the result with the target’s AC. - The system determines hit or miss. -
+Damage is rolled and calculated on a hit. - Resistances,
+vulnerabilities, immunities, and other modifiers apply. - HP and
+relevant effects are updated. - The result is communicated to
+participants.
+
+The DM may override any step.
+
+9.9 Melee attacks
+
+Melee attacks must account for: - Reach. - Target size and occupied
+space. - Weapon properties. - Melee attack modifiers. - Opportunity
+attacks. - Relevant class features and conditions.
+
+9.10 Ranged attacks
+
+Ranged attacks must account for: - Normal and long range. - Disadvantage
+at long range where applicable. - Obstruction. - Cover. - Attacking
+while an enemy is within 5 feet where applicable. - Ammunition. -
+Loading and other weapon properties.
+
+9.11 Cover and line of sight
+
+The map system must support: - No cover. - Half cover. - Three-quarters
+cover. - Total cover.
+
+Cover should affect applicable attack rolls and saving throws according
+to the 2014 rules.
+
+Line of sight and cover are related but separate checks. A target may be
+visible but have cover. A target behind total cover cannot normally be
+targeted by effects that require a clear path, subject to the specific
+effect and DM ruling.
+
+9.12 Damage and healing
+
+The system must support: - Multiple damage types. - Resistance. -
+Vulnerability. - Immunity. - Temporary HP. - Healing. - Damage reduction
+or bonuses from features. - Damage applied by effects over time.
+
+Damage should be applied in the correct order according to the rules.
+The interface should show the calculation and final HP change.
+
+9.13 Conditions and effects
+
+The system should support the standard 2014 conditions, including: -
+Blinded. - Charmed. - Deafened. - Frightened. - Grappled. -
+Incapacitated. - Invisible. - Paralyzed. - Petrified. - Poisoned. -
+Prone. - Restrained. - Stunned. - Unconscious. - Exhaustion.
+
+Conditions must have defined effects and duration/ending rules where the
+source provides them.
+
+The system should support temporary effects with: - Source. - Target. -
+Duration. - Start/end timing. - Saving throw or removal condition. -
+Stacking or replacement behavior.
+
+The DM can add, remove, or edit conditions manually.
+
+9.14 Reactions and opportunity attacks
+
+The system should recognize when a reaction may be available and present
+a prompt to the eligible player.
+
+The player can accept or decline the reaction. The system should resolve
+the reaction according to the relevant rules.
+
+The DM may resolve or override a reaction.
+
+9.15 Spellcasting in combat
+
+Spellcasting should support: - Spell selection. - Spell level. - Spell
+slot consumption. - Casting time. - Range. - Components as relevant. -
+Targeting. - Area of effect. - Saving throws. - Spell attack rolls. -
+Damage and healing. - Conditions and effects. - Concentration. -
+Duration. - Upcasting where applicable.
+
+Complex spells may initially require DM adjudication. The system should
+still provide a clear way to record the spell, consume resources, and
+apply manually determined results.
+
+9.16 Concentration
+
+The system should track whether a character is concentrating on a spell.
+
+When damage or another concentration-breaking event occurs, the system
+should prompt for the appropriate Constitution saving throw according to
+the rules.
+
+The DM can override or manually end concentration.
+
+9.17 Death, unconsciousness, and recovery
+
+The system should support: - HP reaching zero. - Unconsciousness. -
+Death saving throws. - Stabilization. - Healing from zero HP. - Death. -
+Revivification or resurrection effects where supported.
+
+Death saving throws should be tracked across turns and reset according
+to the applicable rules.
+
+The DM can directly change a creature’s state, stabilize or revive a
+character, or otherwise override the outcome.
+
+9.18 Ending combat
+
+Combat may end when the DM ends it or when configured encounter
+conditions are met.
+
+At the end: - Combat state is closed. - Remaining conditions and effects
+persist as appropriate. - XP and rewards are calculated or queued. - The
+DM can distribute or edit rewards. - The encounter is recorded in
+campaign history.
+
+======================================================================
+10. MONSTER AND NPC AI
+======================================================================
+
+10.1 Default control
+
+Monsters are controlled by computer by default. The DM may take manual
+control of any monster or NPC at any time.
+
+10.2 Initial AI behavior
+
+The first AI version should be reliable and understandable rather than
+overly sophisticated.
+
+It should: - Identify valid visible targets. - Consider distance and
+movement. - Choose an available attack or ability. - Move toward a
+target when appropriate. - Avoid obviously impossible movement. -
+Respect basic range and line-of-sight rules. - Use limited resources
+where configured. - End its turn when it has no useful legal action.
+
+10.3 AI difficulty and behavior profiles
+
+Future behavior profiles may include: - Aggressive. - Defensive. -
+Cautious. - Ranged attacker. - Support. - Guardian. - Fleeing or
+retreating. - Protect a specific target.
+
+AI behavior must not secretly change a creature’s statistics or dice
+results. Difficulty should come from tactics and configured creature
+statistics, not hidden cheating.
+
+10.4 DM control handoff
+
+The DM can switch a creature between AI and manual control during
+combat. The current turn should remain coherent when control changes.
+
+======================================================================
+11. DM CONTROL PANEL AND OVERRIDES
+======================================================================
+
+11.1 Core principle
+
+The DM must be able to freely edit the campaign’s gameplay state at any
+time, including during an active encounter.
+
+11.2 Editable player properties
+
+The DM can edit: - Current and maximum HP. - Temporary HP. - Ability
+scores. - AC. - Speed. - Conditions. - Inventory. - Equipment. -
+Currency. - XP. - Level. - Spell slots. - Class resources. - Position. -
+Visibility. - Character notes. - Other supported character values.
+
+11.3 Editable creature properties
+
+The DM can edit: - Current and maximum HP. - AC. - Ability scores. -
+Movement. - Attacks. - Damage. - Resistances. - Immunities. - Actions
+and abilities. - Conditions. - XP reward. - Loot. - Position. - Size. -
+Visibility. - AI/manual control.
+
+11.4 Combat overrides
+
+The DM can: - Force an attack to hit or miss. - Change an attack or
+damage result. - Change initiative. - Reorder turns. - Skip a turn. -
+End a turn. - Pause or end combat. - Move any token. - Add or remove
+participants. - Apply or remove effects. - Revive or defeat a
+creature. - Resolve an encounter manually.
+
+11.5 Map and campaign overrides
+
+The DM can: - Change tile properties. - Reveal or hide map areas. -
+Spawn or remove tokens. - Open or close doors. - Add objects. - Modify
+campaign settings. - Award or remove rewards. - Change encounter state.
+
+11.6 Change history and undo
+
+Important changes should be recorded with: - Actor who made the
+change. - Timestamp. - Target entity. - Previous value. - New value. -
+Reason or note, if supplied. - Whether the change was a DM override.
+
+The DM should be able to undo recent supported changes. Undo must not
+create inconsistent state. If an action cannot safely be reversed, the
+interface should explain why and offer a manual correction instead.
+
+======================================================================
+12. LIVE MULTIPLAYER AND SYNCHRONIZATION
+======================================================================
+
+12.1 Shared session
+
+All participants in a campaign session must see a consistent shared game
+state, subject to visibility permissions.
+
+Synchronized information includes: - Map and tile changes. - Token
+positions. - Initiative order. - Current turn. - HP and visible
+status. - Combat events. - Dice results visible to that participant. -
+Inventory changes where visible. - DM announcements and roll prompts.
+
+12.2 Server authority
+
+The server is authoritative for game state and gameplay calculations.
+
+A client sends an intended action. The server validates and resolves the
+action, updates the state, and broadcasts the accepted result.
+
+Clients must not be trusted to determine authoritative: - Dice
+results. - Movement allowance. - Attack results. - Damage. - HP. -
+Inventory ownership. - Turn order. - Campaign permissions.
+
+12.3 Connection loss
+
+If a player disconnects: - Their character remains in the campaign. -
+Their current state is preserved. - Other participants are informed when
+appropriate. - The DM can decide how to handle their turn. - The player
+can reconnect and resume.
+
+If the DM disconnects, the campaign should not lose saved state. The
+session should pause or enter a configured safe state. Automatic
+transfer of DM authority is not required for the MVP.
+
+12.4 Concurrent actions
+
+The system must handle cases where two participants attempt actions at
+nearly the same time.
+
+The server must resolve actions in a consistent order and reject actions
+that are no longer valid after an earlier action changes state.
+
+12.5 Notifications
+
+The interface should notify users about: - Their turn beginning. - A
+requested dice roll. - A reaction prompt. - A DM announcement. -
+Important combat changes. - Connection loss or reconnection. - Campaign
+invitation or membership changes.
+
+======================================================================
+13. USER INTERFACE AND EXPERIENCE
+======================================================================
+
+13.1 General UI principles
+
+The interface should be: - Clear. - Readable. - Consistent. -
+Low-clutter. - Easy for new players. - Efficient for experienced DMs. -
+Responsive to common desktop resolutions.
+
+Avoid forcing players to navigate complicated character-sheet menus for
+routine combat actions.
+
+13.2 Player screens
+
+PLAYER HOME: - Character library. - Campaign list. - Invitations. -
+Create character. - Join campaign. - Account settings.
+
+CHARACTER CREATION: - Guided character setup. - Ability score
+assignment. - Race/class/background selection. - Equipment selection. -
+Portrait upload/selection. - Validation and summary.
+
+CHARACTER SHEET: - Overview. - Attributes and skills. - Combat. -
+Actions and attacks. - Inventory and equipment. - Spells and features. -
+Notes.
+
+CAMPAIGN LOBBY: - Campaign information. - Party roster. - Selected
+character. - DM information. - Join/leave session.
+
+LIVE GAME: - Shared tactical map. - Character token. - Party
+information. - Current HP and conditions. - Chat or event feed if
+included. - Dice prompts. - Combat tracker. - Available actions. -
+Character sheet access.
+
+13.3 DM screens
+
+DM HOME: - Campaign list. - Create campaign. - Recent sessions. -
+Campaign invitations.
+
+CAMPAIGN MANAGER: - Player roster. - Character assignments. - Campaign
+settings. - Maps. - Creature library. - Item library. - Encounter
+library. - Session history. - Notes.
+
+MAP EDITOR: - Tile palette. - Map canvas. - Layers. - Object
+placement. - Token placement. - Properties inspector. - Save and
+undo/redo.
+
+LIVE DM VIEW: - Shared map. - Initiative tracker. - Player roster. -
+Creature controls. - Encounter controls. - DM-only information. - Roll
+request controls. - Manual override panel. - Event history.
+
+13.4 Combat interface
+
+The combat interface should clearly show: - Whose turn it is. -
+Initiative order. - Current HP where permitted. - Conditions. -
+Available movement. - Available action and bonus action. - Available
+reactions. - Attack and spell choices. - Legal targets. - Dice
+results. - Action outcome.
+
+The interface should distinguish a selected token, the active token, a
+legal destination, an illegal destination, and a valid target.
+
+13.5 DM information versus player information
+
+The DM may see hidden: - Monster HP. - Monster statistics. - Secret
+doors. - Traps. - Hidden tokens. - Private notes. - Secret roll DCs. -
+Unrevealed map areas.
+
+Players should only see information allowed by campaign settings and DM
+decisions.
+
+======================================================================
+14. CHAT, NOTES, AND COMMUNICATION
+======================================================================
+
+14.1 Session communication
+
+A simple text chat or event feed is recommended.
+
+It may support: - Public campaign messages. - DM announcements. -
+Private DM-to-player messages. - System messages. - Dice roll results. -
+Combat events.
+
+Voice and video chat are not required for the MVP.
+
+14.2 Notes
+
+The DM should be able to maintain: - Campaign notes. - Session notes. -
+Map notes. - NPC notes. - Encounter notes. - Secret notes.
+
+Player-visible and DM-only notes must be kept separate.
+
+14.3 Event feed
+
+The event feed may display: - Character moved. - Attack made. - Attack
+hit or missed. - Damage dealt. - Healing applied. - Creature defeated. -
+Dice rolled. - Turn changed. - DM override performed.
+
+The DM can control how much information is displayed to players.
+
+======================================================================
+15. DATA MODEL REQUIREMENTS
+======================================================================
+
+The implementation must represent the following logical entities. Exact
+table names and database structure may vary.
+
+USER: Account identity, authentication reference, profile, preferences,
+creation date, account status.
+
+CHARACTER: Persistent player-owned character identity and base character
+data.
+
+CHARACTER CAMPAIGN INSTANCE: Campaign-specific character state,
+including HP, conditions, inventory, XP, location, and campaign-specific
+changes.
+
+CAMPAIGN: Owner, name, description, settings, status, creation date.
+
+CAMPAIGN MEMBER: User, campaign, role, permissions, membership status.
+
+MAP: Campaign, name, dimensions, grid scale, layers, visibility
+settings.
+
+TILE DEFINITION: Reusable tile type with visual and gameplay properties.
+
+MAP TILE: A tile instance at a coordinate on a specific map.
+
+MAP OBJECT: Door, obstacle, interactive object, trap, decoration, or
+other object.
+
+TOKEN: Map representation of a character, creature, or NPC.
+
+CREATURE TEMPLATE: Reusable creature definition.
+
+CREATURE INSTANCE: Campaign-specific creature state and overrides.
+
+ITEM DEFINITION: Reusable item data.
+
+ITEM INSTANCE / INVENTORY ENTRY: Owned item, quantity, charges,
+equipment state, and owner.
+
+SPELL DEFINITION: Spell rules and data.
+
+CHARACTER SPELL STATE: Known, prepared, available, or otherwise
+character-specific spell data.
+
+ENCOUNTER: Saved encounter configuration, participants, and rewards.
+
+COMBAT SESSION: Active combat state, initiative order, turn, and action
+tracking.
+
+DICE ROLL: Roll details, result, modifiers, visibility, and override
+record.
+
+EFFECT / CONDITION: Active condition or temporary effect, target,
+source, and duration.
+
+LOOT TABLE: Possible reward entries and generation rules.
+
+GAME EVENT: Auditable record of meaningful state changes.
+
+INVITATION: Campaign invitation code/link, creator, expiration, and use
+state.
+
+ASSET: Portrait, token, tile image, map image, or other uploaded media
+metadata.
+
+15.1 Data ownership and consistency
+
+A player’s base character must be distinct from a campaign-specific
+instance. A creature template must be distinct from a spawned creature
+instance. A tile definition must be distinct from a placed map tile.
+
+This separation prevents changes to one campaign, creature, or map from
+unintentionally changing unrelated records.
+
+15.2 Data validation
+
+All gameplay-changing input must be validated by the server. References
+must point to entities the user is permitted to access. Invalid, stale,
+or unauthorized changes must be rejected.
+
+15.3 Backups and recovery
+
+Campaigns and character data must be backed up. The product should
+provide a recovery strategy for accidental deletion, corrupted data, or
+failed updates.
+
+======================================================================
+16. SECURITY, PRIVACY, AND PERMISSIONS
+======================================================================
+
+16.1 Authentication
+
+Users must authenticate before accessing private account and campaign
+data.
+
+16.2 Authorization
+
+Every request must verify: - User identity. - Campaign membership. -
+Role. - Ownership. - Permission for the requested action. - Visibility
+of the requested information.
+
+Hiding a button in the interface is not sufficient security. The server
+must enforce permissions.
+
+16.3 DM privileges
+
+The DM has broad authority within their own campaign but must not
+automatically gain access to unrelated campaigns or private account
+information.
+
+16.4 Player privileges
+
+Players may only control their assigned characters and permitted
+actions. They must not be able to modify other players’ characters,
+creature templates, campaign settings, or DM-only information.
+
+16.5 Upload safety
+
+Uploaded portraits and assets must be checked for supported format, file
+size, and safe handling. Uploaded files must not be executed as
+application code.
+
+16.6 Privacy
+
+Private campaign data should only be available to authorized campaign
+members and administrators with a legitimate operational need.
+
+======================================================================
+17. CONTENT AND RULES DATA
+======================================================================
+
+17.1 Rules baseline
+
+The Application uses D&D 5e 2014 as its baseline.
+
+The project should use the applicable SRD 5.1 material and other content
+that the project has permission to use. The project must not assume that
+all proprietary D&D sourcebook content is available for copying.
+
+17.2 Data-driven content
+
+Rules content should be stored in structured data definitions rather
+than hard-coded separately into every screen.
+
+Content categories include: - Races. - Classes. - Subclasses. -
+Backgrounds. - Feats. - Skills. - Proficiencies. - Equipment. -
+Weapons. - Armor. - Spells. - Monsters. - Conditions. - Traits. -
+Actions. - Rules references.
+
+17.3 Custom content
+
+The DM should eventually be able to create custom: - Creatures. -
+NPCs. - Items. - Weapons. - Armor. - Spells. - Abilities. -
+Conditions. - Tile types. - Loot tables. - Encounter templates.
+
+Custom content should be clearly identified and should not overwrite
+official baseline data.
+
+17.4 Rules versioning
+
+Rules content should have a version/source identifier. A campaign should
+retain its selected rules/content version so later content updates do
+not silently change an ongoing campaign.
+
+======================================================================
+18. NON-FUNCTIONAL REQUIREMENTS
+======================================================================
+
+18.1 Performance
+
+The map should remain usable with a practical number of tiles and
+tokens. The interface should avoid unnecessary redraws and excessive
+network traffic.
+
+Common actions such as moving a token, rolling a die, or updating HP
+should feel responsive.
+
+18.2 Reliability
+
+The application should preserve accepted game actions. A browser refresh
+or temporary connection interruption must not silently erase saved
+campaign state.
+
+18.3 Scalability
+
+The architecture should support multiple campaigns and multiple
+simultaneous sessions. The initial release does not need to support
+massive player counts, but it should not assume that only one campaign
+can exist.
+
+18.4 Accessibility
+
+Text should be readable. Important states should not rely on color
+alone. Interactive controls should have clear labels and keyboard access
+where practical.
+
+18.5 Browser support
+
+Support current major desktop browsers. The application should display a
+clear message if a browser lacks a required feature.
+
+18.6 Observability
+
+Errors and important operational failures should be logged in a way that
+helps diagnose problems without exposing passwords, secrets, or
+unnecessary personal data.
+
+======================================================================
+19. MVP SCOPE
+======================================================================
+
+The first playable release should focus on the smallest complete
+multiplayer D&D session.
+
+19.1 Required MVP features
+
+ACCOUNTS: - Player and DM accounts. - Authentication. - Campaign
+invitations.
+
+CHARACTERS: - Character creation. - Portrait upload or selection. -
+Basic 2014 character sheet. - Ability scores and modifiers. - Basic
+equipment and inventory. - HP, AC, speed, and initiative.
+
+CAMPAIGNS: - Create campaign. - Join campaign. - Player roster. -
+Persistent campaign state.
+
+MAPS: - Square grid. - 5-foot scale. - Basic floor and wall tiles. -
+Walkability. - Vision blocking. - Map saving. - Token placement and
+movement.
+
+CREATURES: - Basic creature templates. - Spawn monsters. - Set HP and
+AC. - Edit monster statistics. - Place monsters on the map.
+
+DICE: - Server-authoritative d20 rolls. - Modifier calculation. -
+Advantage and disadvantage. - Roll display. - DM roll requests outside
+combat.
+
+COMBAT: - Start combat. - Initiative. - Turn tracker. - Movement
+validation. - Basic melee attacks. - Basic ranged attacks. - Hit/miss
+and damage calculation. - HP updates. - Basic monster AI. - DM manual
+control.
+
+DM TOOLS: - Edit player HP. - Edit monster HP. - Edit basic player
+statistics. - Edit inventory. - Edit creature statistics. - Move
+tokens. - Add/remove creatures. - Override combat results. - End or
+pause combat.
+
+19.2 MVP exclusions
+
+The following are not required for the first playable release: - Full
+implementation of every published spell. - Every class and subclass
+feature. - Every monster from every sourcebook. - Advanced monster
+tactics. - Complex spell templates and area targeting. - Full lighting
+simulation. - Advanced fog of war. - Voice/video chat. - 3D maps. -
+Physics simulation. - Animated miniatures. - Automated narrative
+generation. - Marketplace or user-generated content marketplace. -
+Mobile-native application. - Advanced campaign scripting.
+
+These may be added later without changing the core product vision.
+
+======================================================================
+20. DEVELOPMENT PHASES
+======================================================================
+
+PHASE 1 - FOUNDATION - Establish project structure. - Establish shared
+data types. - Establish user accounts. - Establish database entities. -
+Establish authentication and permissions. - Establish basic application
+navigation.
+
+PHASE 2 - CHARACTER SYSTEM - Character creation. - Ability scores. -
+Basic 2014 calculations. - Character sheet. - Portrait management. -
+Inventory foundation.
+
+PHASE 3 - CAMPAIGN AND MULTIPLAYER - Campaign creation. - Invitations. -
+Membership. - Session access. - Persistent campaign state. - Real-time
+synchronization.
+
+PHASE 4 - MAP EDITOR - Square grid. - Tile definitions. - Map creation
+and saving. - Floor and wall tiles. - Collision and vision properties. -
+Token placement.
+
+PHASE 5 - COMBAT ENGINE - Dice engine. - Initiative. - Turn
+management. - Movement. - Attack resolution. - Damage and healing. -
+Basic conditions.
+
+PHASE 6 - CREATURE SYSTEM - Creature templates. - Monster placement. -
+Creature editing. - Basic monster AI. - DM manual control.
+
+PHASE 7 - DM OVERRIDES - Full edit tools. - Roll overrides. - State
+changes. - Event history. - Undo for supported changes.
+
+PHASE 8 - MVP TESTING AND RELEASE - Multiplayer testing. - Rules
+validation. - Security testing. - Data recovery testing. - Usability
+improvements. - Initial deployment.
+
+PHASE 9 - EXPANSION - More rules content. - More spells and features. -
+Advanced map systems. - Fog of war. - Advanced AI. - Custom content. -
+Campaign tools. - Import/export.
+
+======================================================================
+21. ACCEPTANCE CRITERIA
+======================================================================
+
+The MVP is considered playable only when the following complete flow
+works:
+
+1.  A DM creates an account.
+2.  A DM creates a campaign.
+3.  A player creates an account.
+4.  The player joins the campaign using an invitation.
+5.  The player creates a character.
+6.  The player selects that character for the campaign.
+7.  The DM opens a live session.
+8.  The DM creates or loads a square-grid map.
+9.  The DM places player tokens.
+10. The DM spawns a monster.
+11. The player and DM see synchronized map state.
+12. The DM starts combat.
+13. Players roll initiative.
+14. The system calculates and displays initiative modifiers.
+15. The system creates turn order.
+16. A player moves their character.
+17. The system validates movement distance and collision.
+18. The player attacks a monster.
+19. The system calculates the attack result and damage.
+20. The monster’s HP updates for all authorized participants.
+21. The monster AI takes its turn.
+22. The DM can take manual control of the monster.
+23. The DM can modify player or monster HP.
+24. The DM can override an action or result.
+25. The campaign state is saved.
+26. A player disconnects and reconnects without losing their character.
+27. The session can be resumed with the saved state.
+
+If this flow cannot be completed reliably, the MVP is not complete.
+
+======================================================================
+22. TESTING REQUIREMENTS
+======================================================================
+
+22.1 Rules tests
+
+Test ability modifiers, proficiency bonuses, skill checks, saving
+throws, initiative, attack rolls, damage, critical hits, advantage,
+disadvantage, resistance, vulnerability, immunity, healing, HP,
+conditions, and death saving throws.
+
+22.2 Movement tests
+
+Test: - Ordinary movement. - Diagonal movement. - Difficult terrain. -
+Blocked tiles. - Occupied tiles. - Large creatures. - Movement limits. -
+Doors. - Different movement modes. - DM override.
+
+22.3 Multiplayer tests
+
+Test: - Multiple players joining one campaign. - Simultaneous map
+updates. - Simultaneous action attempts. - Player
+disconnect/reconnect. - DM disconnect/reconnect. - Stale client state. -
+Unauthorized requests.
+
+22.4 Permission tests
+
+Test that: - A player cannot edit another player’s character. - A player
+cannot edit monster statistics. - A player cannot access DM-only
+notes. - A player cannot reveal hidden map information. - A player
+cannot submit arbitrary dice results. - A DM can perform permitted
+overrides in their own campaign. - A DM cannot access unrelated private
+campaigns.
+
+22.5 Persistence tests
+
+Test: - Browser refresh. - Session restart. - Campaign reload. -
+Character reload. - Map reload. - Interrupted network connection. -
+Backup and restoration.
+
+======================================================================
+23. FUTURE FEATURES
+======================================================================
+
+These features are desirable but are not prerequisites for the MVP.
+
+MAP AND VISIBILITY: - Fog of war. - Dynamic lighting. - Vision ranges. -
+Darkvision and special senses. - Hidden traps and secret doors. -
+Advanced map layers. - Environmental hazards. - Animated map effects.
+
+COMBAT: - Full spell targeting. - Area-of-effect templates. - Advanced
+reactions. - Grappling. - Shoving. - Mounted combat. - Cover automation
+improvements. - Complex conditions. - Summons and companions. -
+Legendary and lair actions.
+
+CAMPAIGNS: - Session scheduling. - Campaign journal. - Quest tracking. -
+Faction tracking. - Player handouts. - Shared maps and reusable map
+library. - Campaign export/import. - Multiple DMs or co-DMs.
+
+CONTENT: - Custom races. - Custom classes and subclasses. - Custom
+spells. - Custom equipment. - Custom monsters. - Custom conditions. -
+Community content sharing, subject to permissions.
+
+QUALITY OF LIFE: - Searchable rules reference. - Dice history. -
+Character import/export. - Encounter balancing assistance. - Saved
+encounter presets. - Saved monster groups. - Token status
+customization. - Keyboard shortcuts. - Optional sound effects. -
+Optional chat integration.
+
+======================================================================
+24. IMPORTANT PRODUCT RULES AND DESIGN CONSTRAINTS
+======================================================================
+
+1.  The DM always has final authority over their campaign.
+
+2.  The server is authoritative for gameplay state and dice results.
+
+3.  Players should not have to perform routine D&D arithmetic manually.
+
+4.  The Application must show how automated results were calculated.
+
+5.  Out-of-combat rolls are DM-directed or DM-adjudicated.
+
+6.  Combat rolls are requested and resolved by the game system when
+    player input is required.
+
+7.  Monsters are AI-controlled by default, but the DM can control them.
+
+8.  Map visuals must be separate from terrain and collision data.
+
+9.  Movement collision and line of sight must be separate concepts.
+
+10. Player-owned character records must be separate from campaign-
+    specific character state.
+
+11. Creature templates must be separate from spawned creature instances.
+
+12. Tile definitions must be separate from placed map tiles.
+
+13. DM overrides must be recorded distinctly from normal game actions.
+
+14. House rules must be configurable and clearly distinguished from
+    baseline 2014 rules.
+
+15. The product should favor clarity and ease of use over unnecessary
+    interface complexity.
+
+16. The MVP must prioritize a complete playable session over a large
+    collection of unfinished features.
+
+17. New features must not undermine the DM’s authority or the server’s
+    responsibility for validating game actions.
+
+======================================================================
+25. OPEN DECISIONS
+======================================================================
+
+The following decisions are intentionally not finalized. The project can
+begin without resolving all of them, but they should be decided before
+the relevant feature is implemented.
+
+-   Exact authentication provider and account recovery method.
+-   Whether guest access is supported.
+-   Maximum players per campaign.
+-   Whether multiple characters per player can be active in one
+    campaign.
+-   Whether a character may be reused across campaigns.
+-   Whether a campaign can have multiple DMs.
+-   Exact diagonal movement convention.
+-   Exact fog-of-war behavior.
+-   Whether players can edit their inventory without DM approval.
+-   Whether players can see exact monster HP or only status
+    descriptions.
+-   Whether dice rolls can be hidden from other players.
+-   Whether the DM can secretly roll on behalf of players.
+-   Whether the DM can pause a player’s turn indefinitely.
+-   Whether the system supports campaign-specific content packs.
+-   Whether custom content can be shared between DMs.
+-   Whether maps can be imported from external image files.
+-   Whether tokens can be animated.
+-   Whether a mobile-friendly play interface is included in the first
+    public release.
+-   Whether voice/video communication is ever built into the product.
+
+Recommended default for unresolved rules decisions: follow D&D 5e 2014
+as closely as the supported system allows, and let the DM adjudicate
+exceptions.
+
+======================================================================
+26. DEFINITION OF SUCCESS
+======================================================================
+
+The product succeeds when a DM can host a complete online D&D session
+without needing to manually calculate routine combat mechanics or
+maintain a separate map and character-state system.
+
+A player should be able to: - Create a character. - Join a campaign. -
+Understand their character’s available actions. - Move and fight on a
+shared tactical map. - Roll dice with automatic modifiers. - See the
+result of their actions. - Preserve their character’s campaign progress.
+
+A DM should be able to: - Create a campaign. - Build and edit maps. -
+Place monsters and NPCs. - Run encounters. - Let the system handle
+routine combat. - Take over monsters when desired. - Freely correct or
+override any game state. - Preserve the campaign between sessions.
+
+The Application should make D&D easier to operate without taking away
+the creativity, flexibility, and human judgment that make tabletop
+role-playing games enjoyable.
+
+======================================================================
+END OF SPECIFICATION
+======================================================================

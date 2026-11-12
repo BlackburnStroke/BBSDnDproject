@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Cellar of the Brass Lantern – D&D Tabletop</title>
+<link href="https://fonts.googleapis.com/css2?family=Alegreya:wght@500;700&family=Alegreya+Sans:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f1eee8;--pn:#fff;--ink:#23262d;--mut:#6a6f7a;--line:#cfc9bd;--br:#8a6a1f;--red:#a8382b;--grn:#3f7a4a;--fl:#ddd5c2;--wl:#3a3f4a;--df:#b9a77c;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#171a20;--pn:#222731;--ink:#e8e4da;--mut:#98a0ad;--line:#394050;--br:#d6ad4f;--red:#e0685a;--grn:#6fb07a;--fl:#2b303b;--wl:#0d0f13;--df:#4a4331}}
+:root[data-theme="dark"]{--bg:#171a20;--pn:#222731;--ink:#e8e4da;--mut:#98a0ad;--line:#394050;--br:#d6ad4f;--red:#e0685a;--grn:#6fb07a;--fl:#2b303b;--wl:#0d0f13;--df:#4a4331}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.4 "Alegreya Sans",system-ui,sans-serif;background-color:var(--bg)}
+h1,h2{font-family:Alegreya,Georgia,serif;margin:0}h1{font-size:26px}h2{font-size:18px;margin-bottom:6px}
+header{padding:12px 16px;display:flex;gap:16px;align-items:baseline;flex-wrap:wrap;border-bottom:1px solid var(--line)}
+header span{color:var(--mut)}
+main{display:flex;gap:14px;padding:14px;flex-wrap:wrap;align-items:flex-start}
+.board{flex:1 1 560px;min-width:0}.side{flex:0 1 330px;width:100%;display:flex;flex-direction:column;gap:12px}
+.wrap{overflow-x:auto;border:1px solid var(--line);background:var(--pn);padding:6px;border-radius:6px}
+canvas{display:block;cursor:pointer;max-width:none}
+.pn{background:var(--pn);border:1px solid var(--line);border-radius:6px;padding:10px 12px}
+button,select{font:inherit;color:var(--ink);background:var(--pn);border:1px solid var(--line);border-radius:5px;padding:6px 10px;cursor:pointer}
+button:hover{border-color:var(--br)}button:focus-visible,select:focus-visible,canvas:focus-visible{outline:2px solid var(--br);outline-offset:2px}
+button.pri{background:var(--br);color:#fff;border-color:var(--br);font-weight:500}
+button.on{border-color:var(--br);box-shadow:inset 0 0 0 1px var(--br)}
+.row{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0}
+.bar{padding:8px 0;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.ini{list-style:none;margin:0;padding:0}.ini li{display:flex;gap:8px;align-items:center;padding:4px 6px;border-radius:4px;border-left:4px solid transparent}
+.ini li.act{background:color-mix(in srgb,var(--br) 18%,transparent);border-left-color:var(--br)}.ini li.dead{opacity:.45;text-decoration:line-through}
+.hp{flex:1;height:6px;background:var(--line);border-radius:3px;overflow:hidden}.hp i{display:block;height:100%;background:var(--grn)}
+#log{height:230px;overflow:auto;font-size:14px}#log p{margin:0 0 5px;padding-bottom:4px;border-bottom:1px dotted var(--line)}
+.ov{color:var(--red);font-weight:500}.hit{color:var(--grn)}.small{font-size:13px;color:var(--mut)}
+label{font-size:14px}input[type=number]{width:60px;font:inherit;padding:4px;background:var(--pn);color:var(--ink);border:1px solid var(--line);border-radius:4px}
+</style></head><body>
+<header><h1>Cellar of the Brass Lantern</h1><span>A five-foot-grid skirmish following the D&amp;D 5e (2014) basics</span></header>
+<main>
+<section class="board">
+<div class="bar" role="toolbar" aria-label="Combat controls">
+<button class="pri" id="bStart">Start combat</button><button id="bEnd">End turn</button>
+<label>Roll <select id="adv"><option value="0">normally</option><option value="1">with advantage</option><option value="-1">with disadvantage</option></select></label>
+<span id="status" class="small" aria-live="polite"></span></div>
+<div class="wrap"><canvas id="cv" tabindex="0" aria-label="Tactical map"></canvas></div>
+<p class="small">Click a green square to move your active hero. Click an enemy to attack: melee reaches adjacent squares, the longbow reaches 8 squares (disadvantage past that or with an enemy adjacent). Difficult terrain costs double. Walls block movement and sight.</p>
+</section>
+<aside class="side">
+<div class="pn"><h2>Initiative</h2><ul class="ini" id="ini"></ul></div>
+<div class="pn"><h2>Dungeon Master</h2>
+<div class="row"><button id="mDM" aria-pressed="false">DM override: off</button><button id="mEd" aria-pressed="false">Map editor: off</button></div>
+<div id="dm" hidden>
+<div class="small" id="sel">Select a token on the map.</div>
+<div class="row"><label>HP <input type="number" id="eHp"></label><label>AC <input type="number" id="eAc"></label><button id="eSet">Apply</button></div>
+<div class="row"><button id="fHit">Force next hit</button><button id="fMiss">Force next miss</button><button id="eSkip">Skip turn</button></div>
+<div class="small">With override on, click an empty square to move the selected token anywhere.</div></div>
+<div id="ed" hidden><div class="row"><button data-b="0" class="on">Floor</button><button data-b="1">Wall</button><button data-b="2">Difficult</button></div><div class="small">Click or drag on the map to paint.</div></div>
+</div>
+<div class="pn"><h2>Event log</h2><div id="log" aria-live="polite"></div>
+<div class="row"><button id="bSave">Save</button><button id="bLoad">Load</button><button id="bReset">New game</button></div></div>
+</aside></main>
+<script>
+const W=20,H=13,C=34,cv=document.getElementById("cv"),g=cv.getContext("2d");
+cv.width=W*C;cv.height=H*C;
+let S,sel=null,dm=false,edit=false,brush=0,force=null,busy=false;
+const $=id=>document.getElementById(id);
+function newGame(){
+ const m=[];for(let y=0;y<H;y++){m.push([]);for(let x=0;x<W;x++)m[y].push(x==0||y==0||x==W-1||y==H-1?1:0)}
+ for(let y=1;y<H-1;y++)if(y!=6&&y!=7)m[y][10]=1;
+ [[3,3],[4,3],[3,4],[4,4],[5,4],[14,8],[15,8],[14,9],[15,9],[16,9],[12,2],[13,2]].forEach(([x,y])=>m[y][x]=2);
+ [[6,9],[7,9],[16,3],[17,3]].forEach(([x,y])=>m[y][x]=1);
+ const T=(id,name,team,x,y,hp,ac,dex,atk,col,gl)=>({id,name,team,x,y,hp,max:hp,ac,dex,atk,col,gl,speed:6});
+ S={map:m,round:0,combat:false,order:[],turn:0,moves:0,acted:false,log:[],
+ toks:[T(1,"Brannoc","pc",2,5,28,18,1,{n:"longsword",b:5,d:[1,8,3],r:1},"#3f6fb5","B"),
+ T(2,"Ilsa","pc",2,8,22,15,3,{n:"longbow",b:5,d:[1,8,3],r:8,long:16},"#3f8a5a","I"),
+ T(3,"Goblin A","mon",14,5,7,15,2,{n:"scimitar",b:4,d:[1,6,2],r:1},"#a8382b","g"),
+ T(4,"Goblin B","mon",15,7,7,15,2,{n:"scimitar",b:4,d:[1,6,2],r:1},"#a8382b","g"),
+ T(5,"Goblin Archer","mon",17,10,7,15,2,{n:"shortbow",b:4,d:[1,6,2],r:7,long:14},"#a8382b","a")]};
+ sel=null;force=null;log("Two heroes enter the cellar. Press <b>Start combat</b>.");
+}
+const live=t=>t.hp>0,at=(x,y)=>S.toks.find(t=>live(t)&&t.x==x&&t.y==y);
+const d=(a,b)=>Math.max(Math.abs(a.x-b.x),Math.abs(a.y-b.y));
+const act=()=>S.combat?S.toks.find(t=>t.id==S.order[S.turn]):null;
+const roll=n=>1+Math.floor(Math.random()*n);
+function log(m,c){S.log.push((c?`<span class="${c}">${m}</span>`:m));if(S.log.length>80)S.log.shift();const l=$("log");l.innerHTML=S.log.map(x=>"<p>"+x+"</p>").join("");l.scrollTop=1e5}
+function reach(t,budget){const R=new Map([[t.x+","+t.y,0]]),q=[[t.x,t.y,0]];
+ while(q.length){q.sort((a,b)=>a[2]-b[2]);const [x,y,c]=q.shift();if(c>R.get(x+","+y))continue;
+  for(let dx=-1;dx<=1;dx++)for(let dy=-1;dy<=1;dy++){if(!dx&&!dy)continue;const nx=x+dx,ny=y+dy;
+   if(nx<0||ny<0||nx>=W||ny>=H)continue;const k=S.map[ny][nx];if(k==1)continue;
+   if(dx&&dy&&(S.map[y][nx]==1||S.map[ny][x]==1))continue;
+   const o=at(nx,ny);if(o&&o!==t)continue;const nc=c+(k==2?2:1);
+   if(nc<=budget&&(!R.has(nx+","+ny)||R.get(nx+","+ny)>nc)){R.set(nx+","+ny,nc);q.push([nx,ny,nc])}}}
+ for(const k of [...R.keys()]){const [x,y]=k.split(",").map(Number);if(at(x,y)&&at(x,y)!==t)R.delete(k)}
+ return R}
+function los(a,b){let x=a.x,y=a.y;const dx=Math.abs(b.x-x),dy=Math.abs(b.y-y),sx=x<b.x?1:-1,sy=y<b.y?1:-1;let e=dx-dy;
+ while(x!=b.x||y!=b.y){const e2=2*e;if(e2>-dy){e-=dy;x+=sx}if(e2<dx){e+=dx;y+=sy}if((x!=b.x||y!=b.y)&&S.map[y][x]==1)return false}return true}
+function attack(a,t,manual){
+ const k=a.atk;let adv=manual,why=[];const dist=d(a,t);
+ if(dist>(k.long||k.r)||!los(a,t))return log("Out of range or no line of sight.","ov");
+ if(k.r>1){if(dist>k.r){adv--;why.push("long range")}if(S.toks.some(o=>live(o)&&o.team!=a.team&&d(a,o)==1)){adv--;why.push("enemy adjacent")}}
+ const r1=roll(20),r2=roll(20);adv=Math.sign(adv);
+ const nat=adv>0?Math.max(r1,r2):adv<0?Math.min(r1,r2):r1,tot=nat+k.b;
+ let hit=nat==20||(nat!=1&&tot>=t.ac),o="";
+ if(force){hit=force=="hit";o=` <span class="ov">[DM forced ${force}]</span>`;force=null}
+ const rs=adv?`d20 ${r1}/${r2} (${adv>0?"adv":"dis"}${why.length?": "+why.join(", "):""})`:`d20 ${r1}`;
+ let m=`<b>${a.name}</b> attacks ${t.name} with ${k.n}: ${rs}${nat==20?" crit!":""} + ${k.b} = ${tot} vs AC ${t.ac}${o} — `;
+ if(hit){let n=k.d[0]*(nat==20?2:1),rs=[];for(let i=0;i<n;i++)rs.push(roll(k.d[1]));const dmg=rs.reduce((p,c)=>p+c,0)+k.d[2];
+  t.hp=Math.max(0,t.hp-dmg);m+=`hit for ${dmg} (${rs.join("+")}+${k.d[2]}).${t.hp?"":" "+t.name+" falls!"}`;log(m,"hit")}else log(m+"miss.");
+ S.acted=true;check();draw()}
+function check(){if(!S.combat)return;
+ if(!S.toks.some(t=>t.team=="mon"&&live(t))){S.combat=false;log("Victory! The cellar is quiet.","hit")}
+ else if(!S.toks.some(t=>t.team=="pc"&&live(t))){S.combat=false;log("The party has fallen.","ov")}ui()}
+function start(){if(S.combat)return;
+ S.toks.filter(live).forEach(t=>{const r=roll(20);t.init=r+t.dex;log(`${t.name} rolls initiative: ${r} + ${t.dex} = ${t.init}`)});
+ S.order=S.toks.filter(live).sort((a,b)=>b.init-a.init||b.dex-a.dex).map(t=>t.id);S.combat=true;S.turn=-1;S.round=1;next()}
+function next(){if(!S.combat)return;
+ for(let i=0;i<S.order.length;i++){S.turn++;if(S.turn>=S.order.length){S.turn=0;S.round++;log(`— Round ${S.round} —`)}
+  const t=act();if(live(t))break}
+ const t=act();S.moves=t.speed;S.acted=false;ui();draw();if(t.team=="mon"){busy=true;setTimeout(ai,700)}else busy=false}
+function ai(){const t=act();if(!S.combat||!t||t.team!="mon")return busy=false;
+ const pcs=S.toks.filter(p=>p.team=="pc"&&live(p)).sort((a,b)=>d(t,a)-d(t,b)),tg=pcs[0];
+ const can=()=>d(t,tg)<=t.atk.r&&los(t,tg);
+ if(!can()){const R=reach(t,S.moves);let best=null,bs=1e9;
+  R.forEach((c,k)=>{const [x,y]=k.split(",").map(Number);const dd=d({x,y},tg)+(los({x,y},tg)?0:3)+(t.atk.r>1?Math.abs(d({x,y},tg)-t.atk.r+1)*.5:0);if(dd<bs||(dd==bs&&c<best.c)){bs=dd;best={x,y,c}}});
+  if(best&&(best.x!=t.x||best.y!=t.y)){t.x=best.x;t.y=best.y;S.moves-=best.c;log(`${t.name} advances.`);draw()}}
+ setTimeout(()=>{if(can())attack(t,tg,0);setTimeout(()=>{busy=false;next()},700)},500)}
+function ui(){const t=act();$("status").textContent=S.combat?`Round ${S.round}: ${t.name}${t.team=="pc"?` — ${S.moves*5} ft move left, ${S.acted?"action used":"action ready"}`:" is acting"}`:"No combat running";
+ $("bStart").disabled=S.combat;$("bEnd").disabled=!S.combat||t.team!="pc";
+ const L=S.combat?S.order.map(i=>S.toks.find(t=>t.id==i)):S.toks;
+ $("ini").innerHTML=L.map(o=>`<li class="${o===t?"act":""} ${live(o)?"":"dead"}"><span style="width:18px;height:18px;border-radius:50%;background:${o.col};display:inline-block"></span><span style="flex:0 0 100px">${o.name}</span><span class="hp" title="${o.hp}/${o.max} HP"><i style="width:${100*o.hp/o.max}%"></i></span><span class="small">${o.hp}/${o.max} · AC ${o.ac}</span></li>`).join("");
+ const s=S.toks.find(x=>x.id==sel);$("sel").textContent=s?`Selected: ${s.name} (${s.hp}/${s.max} HP, AC ${s.ac})`:"Select a token on the map.";
+ if(s){$("eHp").value=s.hp;$("eAc").value=s.ac}}
+function draw(){const t=act()&&act().team=="pc"&&!busy?act():S.toks.find(x=>x.id==sel&&x.team=="pc");
+ const cs=getComputedStyle(document.documentElement),V=n=>cs.getPropertyValue(n).trim();
+ for(let y=0;y<H;y++)for(let x=0;x<W;x++){const k=S.map[y][x];g.fillStyle=k==1?V("--wl"):k==2?V("--df"):V("--fl");g.fillRect(x*C,y*C,C,C);
+  g.strokeStyle=V("--line");g.strokeRect(x*C+.5,y*C+.5,C,C);if(k==2){g.fillStyle=V("--ink");g.globalAlpha=.3;g.fillText("∿",x*C+12,y*C+22);g.globalAlpha=1}}
+ if(t&&live(t)&&!edit){const R=reach(t,S.combat?S.moves:99);R.forEach((c,k)=>{if(!c)return;const [x,y]=k.split(",").map(Number);g.fillStyle=V("--grn");g.globalAlpha=.28;g.fillRect(x*C+1,y*C+1,C-1,C-1);g.globalAlpha=1})}
+ S.toks.filter(live).forEach(o=>{const cx=o.x*C+C/2,cy=o.y*C+C/2;g.fillStyle=o.col;g.beginPath();g.arc(cx,cy,C/2-4,0,7);g.fill();
+  const a=act();if(a===o||o.id==sel){g.lineWidth=3;g.strokeStyle=a===o?V("--br"):V("--ink");g.stroke();g.lineWidth=1}
+  g.fillStyle="#fff";g.font="700 16px Alegreya,serif";g.textAlign="center";g.fillText(o.gl,cx,cy+5);
+  g.fillStyle="#000";g.fillRect(o.x*C+3,o.y*C+C-6,C-6,4);g.fillStyle="#6fb07a";g.fillRect(o.x*C+3,o.y*C+C-6,(C-6)*o.hp/o.max,4)});
+ ui()}
+cv.addEventListener("pointerdown",e=>{const r=cv.getBoundingClientRect(),x=Math.floor((e.clientX-r.left)*W/r.width),y=Math.floor((e.clientY-r.top)*H/r.height);
+ if(x<0||y<0||x>=W||y>=H)return;
+ if(edit){paint(x,y);cv.setPointerCapture(e.pointerId);return}
+ const o=at(x,y),a=act();
+ if(dm){if(o){sel=o.id}else{const s=S.toks.find(t=>t.id==sel);if(s&&S.map[y][x]!=1){s.x=x;s.y=y;log(`DM moves ${s.name}.`,"ov")}}draw();return}
+ if(busy)return;
+ if(o&&o.team=="pc"&&!S.combat){sel=o.id;draw();return}
+ const p=S.combat?(a&&a.team=="pc"?a:null):S.toks.find(t=>t.id==sel&&t.team=="pc");
+ if(!p)return;
+ if(o&&o.team=="mon"){if(!S.combat)return log("Start combat first.","ov");if(S.acted)return log("You have already used your action.","ov");return attack(p,o,+$("adv").value)}
+ if(!o){const R=reach(p,S.combat?S.moves:99),c=R.get(x+","+y);if(c){p.x=x;p.y=y;if(S.combat)S.moves-=c;draw()}else log("Can’t reach that square.","ov")}});
+cv.addEventListener("pointermove",e=>{if(edit&&e.buttons){const r=cv.getBoundingClientRect();paint(Math.floor((e.clientX-r.left)*W/r.width),Math.floor((e.clientY-r.top)*H/r.height))}});
+function paint(x,y){if(x>0&&y>0&&x<W-1&&y<H-1&&!at(x,y)){S.map[y][x]=brush;draw()}}
+$("bStart").onclick=start;$("bEnd").onclick=()=>{if(!busy)next()};
+$("mDM").onclick=e=>{dm=!dm;e.target.textContent="DM override: "+(dm?"on":"off");e.target.setAttribute("aria-pressed",dm);$("dm").hidden=!dm;draw()};
+$("mEd").onclick=e=>{edit=!edit;e.target.textContent="Map editor: "+(edit?"on":"off");e.target.setAttribute("aria-pressed",edit);$("ed").hidden=!edit;draw()};
+document.querySelectorAll("[data-b]").forEach(b=>b.onclick=()=>{brush=+b.dataset.b;document.querySelectorAll("[data-b]").forEach(x=>x.classList.toggle("on",x===b))});
+$("eSet").onclick=()=>{const s=S.toks.find(t=>t.id==sel);if(!s)return;const h=+$("eHp").value,a=+$("eAc").value;log(`DM sets ${s.name}: HP ${s.hp}→${h}, AC ${s.ac}→${a}.`,"ov");s.hp=Math.min(Math.max(0,h),Math.max(s.max,h));s.max=Math.max(s.max,s.hp);s.ac=a;check();draw()};
+$("fHit").onclick=()=>{force="hit";log("DM: the next attack will hit.","ov")};$("fMiss").onclick=()=>{force="miss";log("DM: the next attack will miss.","ov")};
+$("eSkip").onclick=()=>{if(S.combat&&!busy){log("DM skips the turn.","ov");next()}};
+$("bSave").onclick=()=>{try{localStorage.setItem("dnd-save",JSON.stringify(S));log("Game saved in this browser.")}catch(e){log("Saving isn’t available here.","ov")}};
+$("bLoad").onclick=()=>{try{const v=localStorage.getItem("dnd-save");if(!v)return log("No saved game found.","ov");S=JSON.parse(v);busy=false;log("Game loaded.");draw();if(S.combat&&act().team=="mon"){busy=true;setTimeout(ai,700)}}catch(e){log("Couldn’t load the save.","ov")}};
+$("bReset").onclick=()=>{busy=false;newGame();draw()};
+newGame();draw();
+</script></body></html>
